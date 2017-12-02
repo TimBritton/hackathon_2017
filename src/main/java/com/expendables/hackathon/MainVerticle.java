@@ -11,17 +11,19 @@ public class MainVerticle extends AbstractVerticle {
     @Override
     public void start() throws Exception {
         vertx.deployVerticle(new HttpJavaVerticle());
-        vertx.deployVerticle("service:io.vertx.vertx-mongo-embedded-db", handler -> {
-            if(handler.succeeded())
-            {
-                log.info("MONGO UP");
-            }
-            else
-            {
-                log.error("{}", handler.cause());
-            }
+//        vertx.deployVerticle("service:io.vertx.vertx-mongo-embedded-db", handler -> {
+//            if(handler.succeeded())
+//            {
+//                log.info("MONGO UP");
+//            }
+//            else
+//            {
+//                log.error("{}", handler.cause());
+//            }
+//
+//        });
+        vertx.deployVerticle(new HexEncodingVerticle());
 
-        });
         System.out.println("HTTP server started on port 8080");
     }
 }

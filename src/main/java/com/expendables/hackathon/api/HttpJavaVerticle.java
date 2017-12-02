@@ -3,10 +3,13 @@ package com.expendables.hackathon.api;
 import com.expendables.hackathon.domain.sensor.Location;
 import com.expendables.hackathon.domain.sensor.Repository.SensorService;
 import com.expendables.hackathon.domain.sensor.Repository.mongo.MongoSensorService;
+import com.expendables.hackathon.domain.sensor.Sensor;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
+import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerResponse;
@@ -16,6 +19,9 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.StaticHandler;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class HttpJavaVerticle extends AbstractVerticle{
@@ -73,8 +79,12 @@ public class HttpJavaVerticle extends AbstractVerticle{
             JsonObject postBody = event.getBodyAsJson();
 
             String loraId = postBody.getString("DevEUI");
+
+            //TODO: This will come from the gps module
             Double lat = postBody.getDouble("LrrLAT");
             Double lon = postBody.getDouble("LrrLON");
+
+            String payload = postBody.getString("payload_hex");
 
             Location location = new Location("point", new double[]{lat, lon});
 
@@ -85,13 +95,38 @@ public class HttpJavaVerticle extends AbstractVerticle{
                    if(callback.result() == null) {
                        sensorService.createSensor(loraId, location, bax -> {
                            if(bax.succeeded()){
-                               event.response().setStatusCode(201).end();
+
+                               vertx.eventBus().send("hex:to:ascii", payload, handle -> {
+
+                                   LOG.info("" + handle.result());
+//                                    sensorService.updateSensorState();
+                                   event.response().setStatusCode(201).end();
+                               });
+
+
+                           }
+                           else
+                           {
+                               event.response().setStatusCode(400).end();
                            }
 
 
                        });
-                   }
+                   } else {
+                       Sensor sensor = callback.result();
 
+                       vertx.eventBus().send("hex:to:ascii", payload, handle -> {
+
+                           LOG.info("" + handle.result());
+
+//                           sensorService.updateSensorState(sensor.getSensorId(), );
+                           event.response().setStatusCode(201).end();
+                       });
+                   }
+               }
+               else
+               {
+                   event.response().setStatusCode(404).putHeader(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.TEXT_PLAIN).end(callback.cause().getMessage());
                }
            });
 
@@ -112,4 +147,6 @@ public class HttpJavaVerticle extends AbstractVerticle{
         super.start();
 
     }
+
+
 }
