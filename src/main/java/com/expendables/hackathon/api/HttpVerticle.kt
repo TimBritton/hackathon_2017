@@ -13,13 +13,14 @@ class HttpVerticle : AbstractVerticle()
      * @throws Exception
      */
     override fun start() {
+        var server = vertx.createHttpServer()
 
         val router = Router.router(vertx)
 
-        router.get("/api/v1/status/road/:road").handler({
+        router.get("/api/v1/status/road/:address").handler({
             event: RoutingContext? ->
 
-            val requestedRoad: String = event?.get("road")!!
+            val requestedRoad: String = event?.get("address")!!
 
             //Okay at this point we need to find the path that represents the given road
 
@@ -41,6 +42,7 @@ class HttpVerticle : AbstractVerticle()
 
         router.route("/*").handler(StaticHandler.create())
 
+        server.requestHandler({ router.accept(it) }).listen(8080)
         super.start()
     }
 }
