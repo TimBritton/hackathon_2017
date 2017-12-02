@@ -3,6 +3,7 @@ package com.expendables.hackathon.api;
 import com.expendables.hackathon.domain.sensor.Location;
 import com.expendables.hackathon.domain.sensor.Repository.SensorService;
 import com.expendables.hackathon.domain.sensor.Repository.mongo.MongoSensorService;
+import com.expendables.hackathon.helper.ConfigStore;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.vertx.core.AbstractVerticle;
@@ -13,6 +14,7 @@ import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.ext.mongo.MongoClient;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.StaticHandler;
@@ -21,7 +23,7 @@ import io.vertx.ext.web.handler.StaticHandler;
 public class HttpJavaVerticle extends AbstractVerticle{
     Logger LOG = LoggerFactory.getLogger(HttpJavaVerticle.class);
     SensorService sensorService;
-
+    MongoClient mongoClient;
     /**
      * Initialise the verticle.<p>
      * This is called by Vert.x when the verticle instance is deployed. Don't call it yourself.
@@ -34,6 +36,7 @@ public class HttpJavaVerticle extends AbstractVerticle{
         super.init(vertx, context);
 
         sensorService = new MongoSensorService(vertx);
+        this.mongoClient = MongoClient.createShared(vertx, ConfigStore.getMongoConfig());
     }
 
     /**
@@ -46,8 +49,21 @@ public class HttpJavaVerticle extends AbstractVerticle{
     public void start() throws Exception {
 
         HttpServer server = vertx.createHttpServer();
-
         Router router = Router.router(vertx);
+
+        //testing
+        Location coordinates = new Location("point", new double[]{100.0, 100.0});
+        JsonObject location = new JsonObject().put( "type","Point").put("coordinates", coordinates);
+        JsonObject sensorDocument = new JsonObject().put("sensorId", "123456789qwerty").put("location", location);
+
+        mongoClient.save("books", sensorDocument, res -> {
+            if (res.succeeded()) {
+                String id = res.result();
+                System.out.println("Saved book with id " + id);
+            } else {
+                res.cause().printStackTrace();
+            }
+        });
 
         router.get("/api/v1/status/road/:address").handler(
             event -> {
