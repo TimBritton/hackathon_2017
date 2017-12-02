@@ -1,9 +1,13 @@
 package com.expendables.hackathon.api
 
+import io.netty.handler.codec.http.HttpHeaderNames
+import io.netty.handler.codec.http.HttpHeaderValues
 import io.vertx.core.AbstractVerticle
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.RoutingContext
 import io.vertx.ext.web.handler.StaticHandler
+import io.vertx.kotlin.lang.json.JsonObject
+import io.vertx.kotlin.lang.json.json_
 
 class HttpVerticle : AbstractVerticle()
 {
@@ -20,7 +24,7 @@ class HttpVerticle : AbstractVerticle()
         router.get("/api/v1/status/road/:address").handler({
             event: RoutingContext? ->
 
-            val requestedRoad: String = event?.get("address")!!
+            val requestedRoad: String = event?.request()?.getParam("address")!!
 
             //Okay at this point we need to find the path that represents the given road
 
@@ -28,6 +32,12 @@ class HttpVerticle : AbstractVerticle()
 
             //Then we check the status of all of those points and determine the likelihood that
             //there is ice
+            val retJson = JsonObject(
+                "icy" to true,
+                "certainty" to 80.0
+            )
+
+            val response = event.response().putHeader(HttpHeaderNames.CONTENT_TYPE.toString(), HttpHeaderValues.APPLICATION_JSON.toString()).end(retJson.encodePrettily())
 
         })
 
