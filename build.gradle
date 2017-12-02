@@ -33,7 +33,7 @@ dependencies {
 //  compile "io.vertx:$vertxVersion"
 
   compile "io.vertx:vertx-unit:$vertxVersion"
-  compile "org.slf4j:slf4j-log4j12:1.8.0-beta0"
+  compile "ch.qos.logback:logback-classic:1.0.13"
 
   compile "io.vertx:vertx-core:$vertxVersion"
   compile "io.vertx:vertx-mongo-embedded-db:$vertxVersion"

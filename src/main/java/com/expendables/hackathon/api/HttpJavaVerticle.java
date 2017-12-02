@@ -6,10 +6,15 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.StaticHandler;
 
+
 public class HttpJavaVerticle extends AbstractVerticle{
+    Logger LOG = LoggerFactory.getLogger(HttpJavaVerticle.class);
     /**
      * If your verticle does a simple, synchronous start-up then override this method and put your start-up
      * code in here.
@@ -38,8 +43,14 @@ public class HttpJavaVerticle extends AbstractVerticle{
 //            "certainty" to 80.0
 //            )
 
-        event.response().putHeader(HttpHeaderNames.CONTENT_TYPE.toString(), HttpHeaderValues.APPLICATION_JSON.toString()).end(new JsonObject().encodePrettily());
+        event.response().putHeader(HttpHeaderNames.CONTENT_TYPE.toString(), HttpHeaderValues.APPLICATION_JSON.toString()).end(new JsonObject().put("icy", new Boolean(true)).put("certainty", 80.0d).encodePrettily());
 
+        });
+        router.post().handler(BodyHandler.create());
+        router.post("/api/v1/sensor/:sensorId").handler(event -> {
+            LOG.info("" + event.getBodyAsString());
+
+            event.response().end();
         });
 
         router.get("/api/v1/status/:sensorId").handler(
