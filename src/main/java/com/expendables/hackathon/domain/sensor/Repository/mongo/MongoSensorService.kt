@@ -14,6 +14,9 @@ import io.vertx.kotlin.lang.json.json_
 import java.util.*
 
 class MongoSensorService(vertx: Vertx) : SensorService{
+    override fun readSensorStateByLoraId(loraSensorId: String, callbax: Handler<AsyncResult<Sensor>>) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
 
     val mongoClient: MongoClient = MongoClient.createNonShared(vertx, null)
 
