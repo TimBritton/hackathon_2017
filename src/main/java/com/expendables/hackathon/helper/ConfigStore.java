@@ -4,7 +4,7 @@ import io.vertx.core.json.JsonObject;
 
 public class ConfigStore {
 
-    public static final String MONGO_HOST = "192.168.56.11";
+    public static final String MONGO_HOST = "10.91.22.57";
     public static final Integer MONGO_PORT = 27017;
     public static final String MONGO_DB_NAME = "comcast_lora";
 
