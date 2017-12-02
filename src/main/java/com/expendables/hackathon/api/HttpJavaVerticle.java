@@ -14,6 +14,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -89,20 +90,22 @@ public class HttpJavaVerticle extends AbstractVerticle{
         event.response().putHeader(HttpHeaderNames.CONTENT_TYPE.toString(), HttpHeaderValues.APPLICATION_JSON.toString()).end(new JsonObject().put("icy", new Boolean(true)).put("certainty", 80.0d).encodePrettily());
 
         });
+
         router.post().handler(BodyHandler.create());
+
         router.post("/api/v1/sensor/:sensorId").handler(event -> {
             LOG.info("" + event.getBodyAsString());
-            JsonObject postBody = event.getBodyAsJson();
+            JsonObject postBody = new JsonObject(event.getBodyAsString()).getJsonObject("DevEUI_uplink");
 
             String loraId = postBody.getString("DevEUI");
 
             //TODO: This will come from the gps module
-            Double lat = postBody.getDouble("LrrLAT");
-            Double lon = postBody.getDouble("LrrLON");
+            Double lat = Double.valueOf( postBody.getString("LrrLAT"));
+            Double lon = Double.valueOf(postBody.getString("LrrLON"));
 
             String payload = postBody.getString("payload_hex");
 
-            Location loc = new Location("point", new double[]{lat, lon});
+            Location loc = new Location("point", new double[]{lat.doubleValue(), lon.doubleValue()});
 
            sensorService.readSensorStateByLoraId(loraId, callback -> {
 
