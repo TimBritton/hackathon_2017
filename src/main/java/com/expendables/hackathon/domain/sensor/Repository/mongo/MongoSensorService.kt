@@ -3,6 +3,7 @@ package com.expendables.hackathon.domain.sensor.Repository.mongo
 import com.expendables.hackathon.domain.sensor.Location
 import com.expendables.hackathon.domain.sensor.Repository.SensorService
 import com.expendables.hackathon.domain.sensor.Sensor
+import com.expendables.hackathon.helper.ConfigStore
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Handler
@@ -18,7 +19,7 @@ class MongoSensorService(vertx: Vertx) : SensorService{
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    val mongoClient: MongoClient = MongoClient.createNonShared(vertx, null)
+    val mongoClient: MongoClient = MongoClient.createShared(vertx, ConfigStore.getMongoConfig())
 
     override fun readSensorStateBySensorId(sensorId: String, callbax: Handler<AsyncResult<Sensor>>) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
