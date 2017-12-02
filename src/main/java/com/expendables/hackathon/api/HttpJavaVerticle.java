@@ -1,8 +1,13 @@
 package com.expendables.hackathon.api;
 
+import com.expendables.hackathon.domain.sensor.Location;
+import com.expendables.hackathon.domain.sensor.Repository.SensorService;
+import com.expendables.hackathon.domain.sensor.Repository.mongo.MongoSensorService;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Context;
+import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
@@ -15,6 +20,22 @@ import io.vertx.ext.web.handler.StaticHandler;
 
 public class HttpJavaVerticle extends AbstractVerticle{
     Logger LOG = LoggerFactory.getLogger(HttpJavaVerticle.class);
+    SensorService sensorService;
+
+    /**
+     * Initialise the verticle.<p>
+     * This is called by Vert.x when the verticle instance is deployed. Don't call it yourself.
+     *
+     * @param vertx   the deploying Vert.x instance
+     * @param context the context of the verticle
+     */
+    @Override
+    public void init(Vertx vertx, Context context) {
+        super.init(vertx, context);
+
+        sensorService = new MongoSensorService(vertx);
+    }
+
     /**
      * If your verticle does a simple, synchronous start-up then override this method and put your start-up
      * code in here.
@@ -49,8 +70,32 @@ public class HttpJavaVerticle extends AbstractVerticle{
         router.post().handler(BodyHandler.create());
         router.post("/api/v1/sensor/:sensorId").handler(event -> {
             LOG.info("" + event.getBodyAsString());
+            JsonObject postBody = event.getBodyAsJson();
 
-            event.response().end();
+            String loraId = postBody.getString("DevEUI");
+            Double lat = postBody.getDouble("LrrLAT");
+            Double lon = postBody.getDouble("LrrLON");
+
+            Location location = new Location("point", new double[]{lat, lon});
+
+           sensorService.readSensorStateByLoraId(loraId, callback -> {
+
+               if(callback.succeeded())
+               {
+                   if(callback.result() == null) {
+                       sensorService.createSensor(loraId, location, bax -> {
+                           if(bax.succeeded()){
+                               event.response().setStatusCode(201).end();
+                           }
+
+
+                       });
+                   }
+
+               }
+           });
+
+
         });
 
         router.get("/api/v1/status/:sensorId").handler(

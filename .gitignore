@@ -154,6 +154,10 @@ dist/
 nbdist/
 .nb-gradle/
 
+.gradle
+.idea
+
+
 ### VisualStudioCode ###
 .vscode/*
 !.vscode/settings.json

@@ -9,7 +9,9 @@ interface SensorService {
 
     fun readSensorStateBySensorId(sensorId: String, callbax: Handler<AsyncResult<Sensor>>)
 
-    fun createSensor(loraSenorId: String, location: Location, callbax: Handler<AsyncResult<Sensor>>)
+    fun readSensorStateByLoraId(loraSensorId: String, callbax: Handler<AsyncResult<Sensor>>)
+
+    fun createSensor(loraSensorId: String, location: Location, callbax: Handler<AsyncResult<Sensor>>)
 
     fun updateSensor(sensorId: String, sensor:Sensor, callbax: Handler<AsyncResult<Sensor>>)
 
