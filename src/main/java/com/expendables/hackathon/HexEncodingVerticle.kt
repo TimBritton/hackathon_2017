@@ -25,7 +25,7 @@ class HexEncodingVerticle : AbstractVerticle() {
                 i += 2
             }
 
-            event.reply(output)
+            event.reply(output.toString())
         })
         super.start()
     }

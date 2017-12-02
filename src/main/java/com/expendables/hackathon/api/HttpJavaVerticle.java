@@ -145,7 +145,27 @@ public class HttpJavaVerticle extends AbstractVerticle{
                }
                else
                {
-                   event.response().setStatusCode(404).putHeader(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.TEXT_PLAIN).end(callback.cause().getMessage());
+//                   event.response().setStatusCode(404).putHeader(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.TEXT_PLAIN).end(callback.cause().getMessage());
+                   sensorService.createSensor(loraId, loc, bax -> {
+                       if(bax.succeeded()){
+
+                           vertx.eventBus().send("hex:to:ascii", payload, handle -> {
+
+                               LOG.info("" + handle.result());
+//                                    sensorService.updateSensorState();
+                               event.response().setStatusCode(201).end();
+                           });
+
+
+                       }
+                       else
+                       {
+                           event.response().setStatusCode(400).putHeader(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.TEXT_PLAIN).end(callback.cause().getMessage());
+                       }
+
+
+                   });
+
                }
            });
 

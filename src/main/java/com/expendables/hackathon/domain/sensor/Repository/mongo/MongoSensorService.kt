@@ -11,12 +11,40 @@ import io.vertx.core.Vertx
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.mongo.MongoClient
+import io.vertx.kotlin.lang.json.JsonObject
 import io.vertx.kotlin.lang.json.json_
 import java.util.*
 
 class MongoSensorService(vertx: Vertx) : SensorService{
     override fun readSensorStateByLoraId(loraSensorId: String, callbax: Handler<AsyncResult<Sensor>>) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+
+        val query = JsonObject(
+            "loraSenorId" to loraSensorId
+        )
+
+        mongoClient.find("frsty:sensor", query, {callback ->
+
+            if(callback.succeeded())
+            {
+                if(callback.result().size > 0) {
+                    var jsonObject = callback.result().get(0)
+
+                    var sen = Sensor.fromJsonObject(jsonObject)
+                    //todo retrieve stat data if avaiable
+
+                    callbax.handle(Future.succeededFuture(sen))
+                }
+                else
+                {
+                    callbax.handle(Future.failedFuture(Exception("Sensor not found!!!!!!")))
+                }
+            }
+            else
+            {
+                callbax.handle(Future.failedFuture(callback.cause()))
+            }
+
+        })
     }
 
     val mongoClient: MongoClient = MongoClient.createShared(vertx, ConfigStore.getMongoConfig())
