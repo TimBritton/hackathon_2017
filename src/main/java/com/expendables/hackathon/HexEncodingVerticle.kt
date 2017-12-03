@@ -42,8 +42,8 @@ class HexEncodingVerticle : AbstractVerticle() {
             val hexString = event.body()
 
             var json = JsonObject(
-                "lon" to (hexString.substringAfter("c").substringBefore("f").toInt() / 10000.0) * -1.0,
-                        "lat" to (hexString.substringAfter("f").toInt() / 10000.0))
+                "lon" to (hexString.substringAfter("c").substringBefore("f").toInt() / 1000000.0) * -1.0,
+                        "lat" to (hexString.substringAfter("f").toInt() / 1000000.0))
 
             event.reply(json)
         })

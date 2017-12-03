@@ -10,6 +10,7 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.FindOptions;
 import io.vertx.reactivex.ext.mongo.MongoClient;
@@ -46,35 +47,50 @@ public class MainVerticle extends AbstractVerticle {
         System.out.println("HTTP server started on port 8080");
 
         vertx.eventBus().consumer("sensor:retrieve:all", json -> {
+            String jon = "";
             mongoClient.rxFind("frsty:sensor", new JsonObject())
                 .toObservable()
                 .flatMap(list -> Observable.fromIterable(list))
                 .flatMap(jsonObject -> {
-
+                    log.info(jsonObject.encode());
                     Sensor sen = Sensor.fromJsonObject(jsonObject);
                     //todo retrieve stat data if avaiable
                     JsonObject stateQuery = new JsonObject().put( "sensorId" , sen.getSensorId());
 
 
-                    FindOptions findOptions = new FindOptions();
-                    findOptions.setSort(new JsonObject().put(
-                        "createdTime" , -1
-                    ));
-                    findOptions.setLimit(1);
+//                    FindOptions findOptions = new FindOptions();
+//                    findOptions.setSort(new JsonObject().put(
+//                        "createdTime" , -1
+//                    ));
+//                    findOptions.setLimit(1);
+//
+                    log.info("query" + stateQuery.encode());
 
-
-                    return Observable.zip(Observable.just(sen), mongoClient.rxFindWithOptions("frsty:sensor:state",stateQuery, findOptions).toObservable().defaultIfEmpty(farse), (sensor,  results) ->
+                    return  mongoClient.rxFind("frsty:sensor:state",stateQuery).toObservable().defaultIfEmpty(farse)
+                        .flatMap(results ->
                     {
+                        log.info("Zipping components " + results.toString());
+                        if(results.size() > 0){
                         if(!results.get(0).isEmpty()) {
                             SensorState state = SensorState.fromJsonObject(results.get(0));
-                            sensor.setSensorState(state);
-                            return Observable.just(sensor);
+                            sen.setSensorState(state);
+                            return Observable.just(sen);
                         }
+
                         else
-                            return Observable.just(sensor);
+                            return Observable.just(sen);
+
+                        }
+
+                        else
+                            return Observable.just(sen);
                     });
-                }).toList()
-                .subscribe(items2 -> json.reply(Json.encode(items2)));
+                }).filter(filter -> filter.getSensorState() != null).toList()
+                .subscribe(items2 -> json.reply(Json.encode(items2)), error -> {
+                    error.printStackTrace();
+                    log.error("error" + error.getMessage());
+                    json.reply(new JsonArray().encodePrettily());
+                });
 
         });
     }

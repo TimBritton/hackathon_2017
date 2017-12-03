@@ -29,6 +29,7 @@ import io.vertx.ext.web.handler.StaticHandler;
 import java.time.Instant;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 
@@ -82,16 +83,17 @@ public class HttpJavaVerticle extends AbstractVerticle {
             event -> {
                 String requestedRoad = event.request().getParam("address");
 
+                //"1800 W. Central Road mt prospect"
                 //Okay at this point we need to find the path that represents the given road
 
                 //Then we check to see if we have any nodes near that path
 
                 //Then we check the status of all of those points and determine the likelihood that
                 //there is ice
-//            val retJson = JsonObject(
-//            "icy" to true,
-//            "certainty" to 80.0
-//            )
+                //            val retJson = JsonObject(
+                //            "icy" to true,
+                //            "certainty" to 80.0
+                //            )
 
                 event.response().putHeader(HttpHeaderNames.CONTENT_TYPE.toString(), HttpHeaderValues.APPLICATION_JSON.toString()).end(new JsonObject().put("icy", new Boolean(true)).put("certainty", 80.0d).encodePrettily());
 
@@ -101,22 +103,53 @@ public class HttpJavaVerticle extends AbstractVerticle {
 
 
         //
-        router.post("/api/v1/status/point").handler(event -> {
+        router.get("/api/v1/status/point").handler(event -> {
 
-            LOG.info("POST body: " + event.getBodyAsString());
-            JsonObject postBody = event.getBodyAsJson();
-            JsonArray locationArray = postBody.getJsonArray("location");
-            Double longi = locationArray.getDouble(0);
-            Double lati = locationArray.getDouble(1);
-            Integer maxDistance = postBody.getInteger("maxDistance");
+
+
+//            LOG.info("POST body: " + event.getBodyAsString());
+//            JsonObject postBody = event.getBodyAsJson();
+//            JsonArray locationArray = postBody.getJsonArray("location");
+            Double longi =  Double.parseDouble(event.request().getParam("lon"));
+            Double lati = Double.parseDouble(event.request().getParam("lat"));
+            Integer maxDistance = Integer.parseInt(event.request().getParam("rad"));
             JsonObject query = GeoSpatialHelper.help(longi,lati,maxDistance);
 
             mongoClient.find(ConfigStore.MONGO_DB_COLLECTION, query, res -> {
                 if (res.succeeded()) {
-                        event.response().setStatusCode(200);
-                        event.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json");
-                        event.response().end(res.result().toString());
+                    if(res.result().size() > 0) {
+                        List<JsonObject> points = res.result();
+//                    event.response().setStatusCode(200);
+//                    event.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json");
+//                    event.response().end(res.result().toString());
+                        vertx.eventBus().send("sensor:retrieve:all", new JsonObject(), reply -> {
+                            if (reply.succeeded()) {
+                                JsonArray results = new JsonArray();
+                                JsonArray array = new JsonArray((String)reply.result().body());
+                                LOG.info("rez" + array.encodePrettily());
+                                for(LinkedHashMap fi : (List<LinkedHashMap>) array.getList())
+                                {
+                                    JsonObject fullItem = new JsonObject(fi);
+                                    for(JsonObject i : points)
+                                    {
+                                        LOG.info("Comparing full item: " + fullItem.getString("sensorId") + "to" + i.getString("sensorId"));
+                                        if(fullItem.getString("sensorId").equalsIgnoreCase(i.getString("sensorId")))
+                                        {
+                                            results.add(fullItem);
+                                        }
+                                    }
+                                }
 
+                                event.response().setStatusCode(200);
+                                event.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json");
+                                event.response().end(results.encodePrettily());
+
+                            }
+                        });
+                    }
+                    else {
+                        event.response().setStatusCode(400).putHeader(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.TEXT_PLAIN).end("Not found");
+                    }
                 }else {
                     res.cause().printStackTrace();
                     event.response().setStatusCode(400).putHeader(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.TEXT_PLAIN).end(res.cause().getMessage());
@@ -146,7 +179,7 @@ public class HttpJavaVerticle extends AbstractVerticle {
                         if (callback.result() == null) {
                             sensorService.createSensor(loraId, loc, bax -> {
                                 if (bax.succeeded()) {
-                                    processUpdate(bax.result().getSensorId(), payload, event);
+                                    processUpdate(loraId, bax.result().getSensorId(), payload, event);
                                 } else {
                                     event.response().setStatusCode(400).end();
                                 }
@@ -156,13 +189,13 @@ public class HttpJavaVerticle extends AbstractVerticle {
                         } else {
                             Sensor sensor = callback.result();
 
-                            processUpdate(sensor.getSensorId(), payload, event);
+                            processUpdate(loraId, sensor.getSensorId(), payload, event);
                         }
                     } else {
 //                   event.response().setStatusCode(404).putHeader(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.TEXT_PLAIN).end(callback.cause().getMessage());
                         sensorService.createSensor(loraId, loc, bax -> {
                             if (bax.succeeded()) {
-                                processUpdate(bax.result().getSensorId(), payload, event);
+                                processUpdate(loraId, bax.result().getSensorId(), payload, event);
                             } else {
                                 event.response().setStatusCode(400).putHeader(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.TEXT_PLAIN).end(callback.cause().getMessage());
                             }
@@ -191,10 +224,10 @@ public class HttpJavaVerticle extends AbstractVerticle {
 
     }
 
-    private void processUpdate(String sensorId, String payload, RoutingContext event) {
+    private void processUpdate(String loraId, String sensorId, String payload, RoutingContext event) {
         if(payload.startsWith("2"))
         {
-            processGPSUpdate(sensorId, payload, event);
+            processGPSUpdate(loraId, sensorId, payload, event);
         }
         else {
 
@@ -225,38 +258,40 @@ public class HttpJavaVerticle extends AbstractVerticle {
         }
     }
 
-    private void processGPSUpdate(String sensorId, String payload, RoutingContext event) {
-        vertx.eventBus().send("hex:to:ascii:lon:lat", payload, handle -> {
+    private void processGPSUpdate(String loraId, String sensorId, String payload, RoutingContext event) {
+        event.response().setStatusCode(201).putHeader(HttpHeaderNames.CONTENT_TYPE.toString(), HttpHeaderValues.APPLICATION_JSON.toString()).end("{}");
 
-            LOG.info("HEX: " + handle.result().body());
-            JsonObject gps = (JsonObject) handle.result().body();
-
-            double lon = gps.getDouble("lon");
-            double lat = gps.getDouble("lat");
-
-            sensorService.readSensorStateBySensorId(sensorId, call -> {
-
-                if (call.succeeded()) {
-
-                    Sensor sensor = call.result();
-                    sensor.setLocation(new Location("point", new double[]{lon, lat}));
-
-                    sensorService.updateSensor(sensorId, sensor, cb -> {
-
-                        if (cb.succeeded()) {
-                            event.response().setStatusCode(201).putHeader(HttpHeaderNames.CONTENT_TYPE.toString(), HttpHeaderValues.APPLICATION_JSON.toString()).end(cb.result().encode());
-                        } else {
-                            event.response().setStatusCode(400).putHeader(HttpHeaderNames.CONTENT_TYPE.toString(), HttpHeaderValues.TEXT_PLAIN.toString()).end(cb.cause().getMessage());
-                        }
-
-                    });
-
-
-                } else {
-                    event.response().setStatusCode(400).putHeader(HttpHeaderNames.CONTENT_TYPE.toString(), HttpHeaderValues.TEXT_PLAIN.toString()).end(call.cause().getMessage());
-                }
-            });
-        });
+//        vertx.eventBus().send("hex:to:ascii:lon:lat", payload, handle -> {
+//
+//            LOG.info("HEX: " + handle.result().body());
+//            JsonObject gps = (JsonObject) handle.result().body();
+//
+//            double lon = gps.getDouble("lon");
+//            double lat = gps.getDouble("lat");
+//
+//            sensorService.readSensorStateByLoraId(loraId, call -> {
+//
+//                if (call.succeeded()) {
+//
+//                    Sensor sensor = call.result();
+//                    sensor.setLocation(new Location("point", new double[]{lon, lat}));
+//
+//                    sensorService.updateSensor(sensorId, sensor, cb -> {
+//
+//                        if (cb.succeeded()) {
+//                            event.response().setStatusCode(201).putHeader(HttpHeaderNames.CONTENT_TYPE.toString(), HttpHeaderValues.APPLICATION_JSON.toString()).end(cb.result().encode());
+//                        } else {
+//                            event.response().setStatusCode(400).putHeader(HttpHeaderNames.CONTENT_TYPE.toString(), HttpHeaderValues.TEXT_PLAIN.toString()).end(cb.cause().getMessage());
+//                        }
+//
+//                    });
+//
+//
+//                } else {
+//                    event.response().setStatusCode(400).putHeader(HttpHeaderNames.CONTENT_TYPE.toString(), HttpHeaderValues.TEXT_PLAIN.toString()).end(call.cause().getMessage());
+//                }
+//            });
+//        });
     }
 
     private void getIDsFromTheList(List<JsonObject> jsons, Handler<AsyncResult<List<String>>> callback){
