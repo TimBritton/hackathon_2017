@@ -5,16 +5,17 @@ import com.expendables.hackathon.domain.sensor.Repository.SensorService;
 import com.expendables.hackathon.domain.sensor.Repository.mongo.MongoSensorService;
 import com.expendables.hackathon.domain.sensor.Sensor;
 import com.expendables.hackathon.helper.ConfigStore;
+import com.expendables.hackathon.helper.GeoSpatialHelper;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.geojson.Position;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Context;
-import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
+import io.vertx.core.*;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -22,6 +23,15 @@ import io.vertx.ext.mongo.MongoClient;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.StaticHandler;
+
+/*import com.mongodb.Block;
+import com.mongodb.async.client.MongoClient;
+import com.mongodb.async.client.MongoCollection;
+import com.mongodb.async.client.MongoDatabase;
+import com.mongodb.async.client.model.geojson.*;
+import com.mongodb.client.model.Indexes;
+import com.mongodb.client.model.Filters;
+import org.bson.Document;*/
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +41,9 @@ public class HttpJavaVerticle extends AbstractVerticle{
     Logger LOG = LoggerFactory.getLogger(HttpJavaVerticle.class);
     SensorService sensorService;
     MongoClient mongoClient;
+   /* MongoDatabase database;*/
+    //private Mongo _mongo;
+
     /**
      * Initialise the verticle.<p>
      * This is called by Vert.x when the verticle instance is deployed. Don't call it yourself.
@@ -43,7 +56,19 @@ public class HttpJavaVerticle extends AbstractVerticle{
         super.init(vertx, context);
 
         sensorService = new MongoSensorService(vertx);
-        this.mongoClient = MongoClient.createShared(vertx, ConfigStore.getMongoConfig());
+        mongoClient = MongoClient.createShared(vertx, ConfigStore.getMongoConfig());
+        //setupMongo();
+    }
+
+    public void setupMongo() {
+
+   /*     mongoClient = new MongoClient();
+        database = mongoClient.getDatabase(ConfigStore.MONGO_DB_NAME);
+        MongoCollection<Document> collection = database.getCollection(ConfigStore.MONGO_DB_COLLECTION);
+        collection.createIndex(Indexes.geo2dsphere("location"));*/
+
+        /*getCollection().createIndex(new BasicDBObject("location", "2dsphere"));
+        _mongo = new Mongo(new DBAddress(ConfigStore.MONGO_HOST, ConfigStore.MONGO_PORT, ConfigStore.MONGO_DB_NAME));*/
     }
 
     /**
@@ -58,40 +83,33 @@ public class HttpJavaVerticle extends AbstractVerticle{
         HttpServer server = vertx.createHttpServer();
         Router router = Router.router(vertx);
 
-        //testing
-//        Location coordinates = new Location("point", new double[]{100.0, 100.0});
-//        JsonObject location = new JsonObject().put( "type","Point").put("coordinates", coordinates);
-//        JsonObject sensorDocument = new JsonObject().put("sensorId", "123456789qwerty").put("location", location);
-//
-//        mongoClient.save("books", sensorDocument, res -> {
-//            if (res.succeeded()) {
-//                String id = res.result();
-//                System.out.println("Saved book with id " + id);
-//            } else {
-//                res.cause().printStackTrace();
-//            }
-//        });
-
-        router.get("/api/v1/status/road/:address").handler(
-            event -> {
-                String requestedRoad  = event.request().getParam("address");
-
-            //Okay at this point we need to find the path that represents the given road
-
-            //Then we check to see if we have any nodes near that path
-
-            //Then we check the status of all of those points and determine the likelihood that
-            //there is ice
-//            val retJson = JsonObject(
-//            "icy" to true,
-//            "certainty" to 80.0
-//            )
-
-        event.response().putHeader(HttpHeaderNames.CONTENT_TYPE.toString(), HttpHeaderValues.APPLICATION_JSON.toString()).end(new JsonObject().put("icy", new Boolean(true)).put("certainty", 80.0d).encodePrettily());
-
-        });
-
         router.post().handler(BodyHandler.create());
+
+        //
+        router.post("/api/v1/status/point").handler(event -> {
+
+            LOG.info("POST body: " + event.getBodyAsString());
+            JsonObject postBody = event.getBodyAsJson();
+            JsonArray locationArray = postBody.getJsonArray("location");
+            Double longi = locationArray.getDouble(0);
+            Double lati = locationArray.getDouble(1);
+            Integer maxDistance = postBody.getInteger("maxDistance");
+            JsonObject query = GeoSpatialHelper.help(longi,lati,maxDistance);
+
+            mongoClient.find(ConfigStore.MONGO_DB_COLLECTION, query, res -> {
+                if (res.succeeded()) {
+                        event.response().setStatusCode(200);
+                        event.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json");
+                        event.response().end(res.result().toString());
+
+                }else {
+                    res.cause().printStackTrace();
+                    event.response().setStatusCode(400).putHeader(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.TEXT_PLAIN).end(res.cause().getMessage());
+                }
+
+            });
+        });
+        //
 
         router.post("/api/v1/sensor/:sensorId").handler(event -> {
             LOG.info("" + event.getBodyAsString());
@@ -187,5 +205,17 @@ public class HttpJavaVerticle extends AbstractVerticle{
 
     }
 
+    private void getIDsFromTheList(List<JsonObject> jsons, Handler<AsyncResult<List<String>>> callback){
+       List<String> ids = new ArrayList<>();
+
+        for(JsonObject json : jsons)
+        {
+            //ides.add()
+            ids.add(json.getString(""));
+        }
+
+
+        callback.handle(Future.succeededFuture(ids));
+    }
 
 }
