@@ -80,7 +80,7 @@ $(function () {
                 result.push({
                     sensorId: response[i].sensorId,
                     position: new google.maps.LatLng(response[i].location.coordinates[1], response[i].location.coordinates[0]),
-                    type: (response[i].icy == "true" ? 'snowflake' : 'sunny'),
+                    type: (response[i].icy == true ? 'snowflake' : 'sunny'),
                     sensorState: response[i].sensorState
                 })
             }
