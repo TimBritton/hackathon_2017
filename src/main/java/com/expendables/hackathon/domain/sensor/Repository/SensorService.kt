@@ -19,6 +19,6 @@ interface SensorService {
 
     fun updateSensorState(sensor: SensorState, callbax: Handler<AsyncResult<String>>)
 
-    fun readAllSensors(callbax: Handler<AsyncResult<List<Sensor>>>)
+    //fun readAllSensors(callbax: Handler<AsyncResult<List<Sensor>>>)
 
 }

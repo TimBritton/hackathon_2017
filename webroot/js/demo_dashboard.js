@@ -1,70 +1,77 @@
 $(function () {
-    /* reportrange */
-    if ($("#reportrange").length > 0) {
-        $("#reportrange").daterangepicker({
-            ranges: {
-                'Today': [moment(), moment()],
-                'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-                'Last 7 Days': [moment().subtract(6, 'days'), moment()],
-                'Last 30 Days': [moment().subtract(29, 'days'), moment()],
-                'This Month': [moment().startOf('month'), moment().endOf('month')],
-                'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+    var self = this;
+    var updateIcons = function (map) {
+        var iconBase = 'https://maps.google.com/mapfiles/kml/shapes/';
+        var icons = {
+            snowflake: {
+                icon: iconBase + 'snowflake_simple.png'
             },
-            opens: 'left',
-            buttonClasses: ['btn btn-default'],
-            applyClass: 'btn-small btn-primary',
-            cancelClass: 'btn-small',
-            format: 'MM.DD.YYYY',
-            separator: ' to ',
-            startDate: moment().subtract('days', 29),
-            endDate: moment()
-        }, function (start, end) {
-            $('#reportrange span').html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
+            sunny: {
+                icon: iconBase + 'sunny.png'
+            }
+        };
+
+        var features = [
+            {
+                position: new google.maps.LatLng(-33.91721, 151.22630),
+                type: 'snowflake'
+            }, {
+                position: new google.maps.LatLng(-33.91539, 151.22820),
+                type: 'snowflake'
+            }, {
+                position: new google.maps.LatLng(-33.91747, 151.22912),
+                type: 'snowflake'
+            }, {
+                position: new google.maps.LatLng(-33.91910, 151.22907),
+                type: 'snowflake'
+            }, {
+                position: new google.maps.LatLng(-33.91725, 151.23011),
+                type: 'snowflake'
+            }, {
+                position: new google.maps.LatLng(-33.91872, 151.23089),
+                type: 'snowflake'
+            }, {
+                position: new google.maps.LatLng(-33.91784, 151.23094),
+                type: 'sunny'
+            }, {
+                position: new google.maps.LatLng(-33.91682, 151.23149),
+                type: 'sunny'
+            }, {
+                position: new google.maps.LatLng(-33.91790, 151.23463),
+                type: 'sunny'
+            }
+        ];
+
+        // Create markers.
+        features.forEach(function (feature) {
+            var marker = new google.maps.Marker({
+                position: feature.position,
+                icon: icons[feature.type].icon,
+                map: map
+            });
         });
+    };
 
-        $("#reportrange span").html(moment().subtract('days', 29).format('MMMM D, YYYY') + ' - ' + moment().format('MMMM D, YYYY'));
+    var getSensors = function () {
+        var xhttp = new XMLHttpRequest();
+        xhttp.open("GET", "/api/v1/status/point", true);
+        xhttp.setRequestHeader("Content-type", "application/json");
+        xhttp.send();
+        return JSON.parse(xhttp.responseText);
+    };
+
+    var getIcePath = function () {
+        var xhttp = new XMLHttpRequest();
+        xhttp.open("GET", "/api/v1/status/route", true);
+        xhttp.setRequestHeader("Content-type", "application/json");
+        xhttp.send();
+        return JSON.parse(xhttp.responseText);
     }
-    /* end reportrange */
 
-    /* Rickshaw dashboard chart */
-    // var seriesData = [ [], [] ];
-    // var random = new Rickshaw.Fixtures.RandomData(1000);
-
-    // for(var i = 0; i < 100; i++) {
-    // random.addData(seriesData);
-    // }
-
-    // var rdc = new Rickshaw.Graph( {
-    // element: document.getElementById("dashboard-chart"),
-    // renderer: 'area',
-    // width: $("#dashboard-chart").width(),
-    // height: 250,
-    // series: [{color: "#33414E",data: seriesData[0],name: 'New'},
-    // {color: "#1caf9a",data: seriesData[1],name: 'Returned'}]
-    // } );
-
-    // rdc.render();
-
-    // var legend = new Rickshaw.Graph.Legend({graph: rdc, element: document.getElementById('dashboard-legend')});
-    // var shelving = new Rickshaw.Graph.Behavior.Series.Toggle({graph: rdc,legend: legend});
-    // var order = new Rickshaw.Graph.Behavior.Series.Order({graph: rdc,legend: legend});
-    // var highlight = new Rickshaw.Graph.Behavior.Series.Highlight( {graph: rdc,legend: legend} );        
-
-    // var rdc_resize = function() {                
-    // rdc.configure({
-    // width: $("#dashboard-area-1").width(),
-    // height: $("#dashboard-area-1").height()
-    // });
-    // rdc.render();
-    // }
-
-    // var hoverDetail = new Rickshaw.Graph.HoverDetail({graph: rdc});
-
-    // window.addEventListener('resize', rdc_resize);        
-
-    // rdc_resize();
-    /* END Rickshaw dashboard chart */
-
+    radiusChange = function (radius) {
+        document.getElementById(radius + 'value').innerHTML =
+            document.getElementById(radius).value + ' miles';
+    }
     /* Donut dashboard chart */
     Morris.Donut({
         element: 'dashboard-donut-1',
@@ -78,105 +85,6 @@ $(function () {
     });
     /* END Donut dashboard chart */
 
-
-    /* Bar dashboard chart */
-    // Morris.Bar({
-    //     element: 'dashboard-bar-1',
-    //     data: [
-    //         {y: 'Oct 10', a: 75, b: 35},
-    //         {y: 'Oct 11', a: 64, b: 26},
-    //         {y: 'Oct 12', a: 78, b: 39},
-    //         {y: 'Oct 13', a: 82, b: 34},
-    //         {y: 'Oct 14', a: 86, b: 39},
-    //         {y: 'Oct 15', a: 94, b: 40},
-    //         {y: 'Oct 16', a: 96, b: 41}
-    //     ],
-    //     xkey: 'y',
-    //     ykeys: ['a', 'b'],
-    //     labels: ['New Users', 'Returned'],
-    //     barColors: ['#33414E', '#1caf9a'],
-    //     gridTextSize: '10px',
-    //     hideHover: true,
-    //     resize: true,
-    //     gridLineColor: '#E5E5E5'
-    // });
-    /* END Bar dashboard chart */
-
-    /* Line dashboard chart */
-    // Morris.Line({
-    //     element: 'dashboard-line-1',
-    //     data: [
-    //         {y: '2014-10-10', a: 2, b: 4},
-    //         {y: '2014-10-11', a: 4, b: 6},
-    //         {y: '2014-10-12', a: 7, b: 10},
-    //         {y: '2014-10-13', a: 5, b: 7},
-    //         {y: '2014-10-14', a: 6, b: 9},
-    //         {y: '2014-10-15', a: 9, b: 12},
-    //         {y: '2014-10-16', a: 18, b: 20}
-    //     ],
-    //     xkey: 'y',
-    //     ykeys: ['a', 'b'],
-    //     labels: ['Sales', 'Event'],
-    //     resize: true,
-    //     hideHover: true,
-    //     xLabels: 'day',
-    //     gridTextSize: '10px',
-    //     lineColors: ['#1caf9a', '#33414E'],
-    //     gridLineColor: '#E5E5E5'
-    // });
-    /* EMD Line dashboard chart */
-    /* Moris Area Chart */
-    // Morris.Area({
-    //     element: 'dashboard-area-1',
-    //     data: [
-    //         {y: '2014-10-10', a: 17, b: 19},
-    //         {y: '2014-10-11', a: 19, b: 21},
-    //         {y: '2014-10-12', a: 22, b: 25},
-    //         {y: '2014-10-13', a: 20, b: 22},
-    //         {y: '2014-10-14', a: 21, b: 24},
-    //         {y: '2014-10-15', a: 34, b: 37},
-    //         {y: '2014-10-16', a: 43, b: 45}
-    //     ],
-    //     xkey: 'y',
-    //     ykeys: ['a', 'b'],
-    //     labels: ['Sales', 'Event'],
-    //     resize: true,
-    //     hideHover: true,
-    //     xLabels: 'day',
-    //     gridTextSize: '10px',
-    //     lineColors: ['#1caf9a', '#33414E'],
-    //     gridLineColor: '#E5E5E5'
-    // });
-    /* End Moris Area Chart */
-    /* Vector Map */
-    // var jvm_wm = new jvm.WorldMap({
-    //     container: $('#dashboard-map-seles'),
-    //     map: 'world_mill_en',
-    //     backgroundColor: '#FFFFFF',
-    //     regionsSelectable: true,
-    //     regionStyle: {
-    //         selected: {fill: '#B64645'},
-    //         initial: {fill: '#33414E'}
-    //     },
-    //     markerStyle: {
-    //         initial: {
-    //             fill: '#1caf9a',
-    //             stroke: '#1caf9a'
-    //         }
-    //     },
-    //     markers: [{latLng: [50.27, 30.31], name: 'Kyiv - 1'},
-    //         {latLng: [52.52, 13.40], name: 'Berlin - 2'},
-    //         {latLng: [48.85, 2.35], name: 'Paris - 1'},
-    //         {latLng: [51.51, -0.13], name: 'London - 3'},
-    //         {latLng: [40.71, -74.00], name: 'New York - 5'},
-    //         {latLng: [35.38, 139.69], name: 'Tokyo - 12'},
-    //         {latLng: [37.78, -122.41], name: 'San Francisco - 8'},
-    //         {latLng: [28.61, 77.20], name: 'New Delhi - 4'},
-    //         {latLng: [39.91, 116.39], name: 'Beijing - 3'}]
-    // });
-    /* END Vector Map */
-
-
     $(".x-navigation-minimize").on("click", function () {
         setTimeout(function () {
             rdc_resize();
@@ -185,142 +93,136 @@ $(function () {
 
     if ($("#google_world_map").length > 0) {
 
-        var gWorldCords = new google.maps.LatLng(50, 0);
-        var gWorldOptions = {zoom: 1, center: gWorldCords, mapTypeId: google.maps.MapTypeId.ROADMAP}
+        var gWorldCords = new google.maps.LatLng(41.895562, -87.65097);
+        var gWorldOptions = {zoom: 15, center: gWorldCords, mapTypeId: google.maps.MapTypeId.ROADMAP}
         var gWorld = new google.maps.Map(document.getElementById("google_world_map"), gWorldOptions);
-
-        var gEUCords = new google.maps.LatLng(50, 10);
-        var gEUOptions = {zoom: 3, center: gEUCords, mapTypeId: google.maps.MapTypeId.ROADMAP}
-        var gEU = new google.maps.Map(document.getElementById("google_eu_map"), gEUOptions);
-
-        function google_map_search() {
-
-            var gSearch = new google.maps.Map(document.getElementById('google_search_map'), {
-                mapTypeId: google.maps.MapTypeId.ROADMAP
-            });
-
-            var defaultBounds = new google.maps.LatLngBounds(
-                new google.maps.LatLng(-33.8902, 151.1759),
-                new google.maps.LatLng(-33.8474, 151.2631));
-
-            gSearch.fitBounds(defaultBounds);
-
-            var input = /** @type {HTMLInputElement} */(document.getElementById('target'));
-
-            var searchBox = new google.maps.places.SearchBox(input);
-            var markers = [];
-
-            google.maps.event.addListener(searchBox, 'places_changed', function () {
-                var places = searchBox.getPlaces();
-
-                for (var i = 0, marker; marker = markers[i]; i++) {
-                    marker.setMap(null);
-                }
-
-                markers = [];
-                var bounds = new google.maps.LatLngBounds();
-                for (var i = 0, place; place = places[i]; i++) {
-                    var image = {
-                        url: place.icon,
-                        size: new google.maps.Size(71, 71),
-                        origin: new google.maps.Point(0, 0),
-                        anchor: new google.maps.Point(17, 34),
-                        scaledSize: new google.maps.Size(25, 25)
-                    };
-
-                    var marker = new google.maps.Marker({
-                        map: gSearch,
-                        icon: image,
-                        title: place.name,
-                        position: place.geometry.location
-                    });
-
-                    markers.push(marker);
-
-                    bounds.extend(place.geometry.location);
-                }
-
-                gSearch.fitBounds(bounds);
-            });
-
-            google.maps.event.addListener(gSearch, 'bounds_changed', function () {
-                var bounds = gSearch.getBounds();
-                searchBox.setBounds(bounds);
-            });
-        }
-
-        google.maps.event.addDomListener(window, 'load', google_map_search);
-
+        initMap(gWorld);
+        gWorld.addListener('dragend', function () {
+            updateIcons(gWorld);
+            // 3 seconds after the center of the map has changed, pan back to the
+            // marker.
+            // getSensors(JSON.stringify({location: [gWorld.getCenter().lng(), gWorld.getCenter().lat()], maxDistance: 100}));
+            console.log(JSON.stringify({
+                location: [gWorld.getCenter().lng(), gWorld.getCenter().lat()],
+                maxDistance: document.getElementById('radius1').value
+            }));
+        });
     }
 
     if ($("#google_map_route").length > 0) {
 
-        var gWorldCords = new google.maps.LatLng(50, 0);
-        var gWorldOptions = {zoom: 1, center: gWorldCords, mapTypeId: google.maps.MapTypeId.ROADMAP}
-        var gWorld = new google.maps.Map(document.getElementById("google_map_route"), gWorldOptions);
+        var gWorldCords = new google.maps.LatLng(41.895562, -87.65097);
+        var gWorldOptions = {zoom: 15, center: gWorldCords, mapTypeId: google.maps.MapTypeId.ROADMAP};
+        var gWorld1 = new google.maps.Map(document.getElementById("google_map_route"), gWorldOptions);
+        initMap(gWorld1);
+        new AutocompleteDirectionsHandler(gWorld1);
 
-        var gEUCords = new google.maps.LatLng(50, 10);
-        var gEUOptions = {zoom: 3, center: gEUCords, mapTypeId: google.maps.MapTypeId.ROADMAP}
-        var gEU = new google.maps.Map(document.getElementById("google_eu_map"), gEUOptions);
+        gWorld1.addListener('dragend', function () {
+            updateIcons(gWorld1);
+            // 3 seconds after the center of the map has changed, pan back to the
+            // marker.
+            // getSensors(JSON.stringify({location: [gWorld.getCenter().lng(), gWorld.getCenter().lat()], maxDistance: 100}));
+            console.log(JSON.stringify({
+                location: [gWorld.getCenter().lng(), gWorld.getCenter().lat()],
+                maxDistance: document.getElementById('radius1').value
+            }));
+        });
+    }
 
-        function google_map_search() {
+    updateRoute = function () {
+        var xhttp = new XMLHttpRequest();
+        xhttp.open("GET", `https://maps.googleapis.com/maps/api/directions/json?origin=${document.getElementById('origin-input').value}&destination=${document.getElementById('destination-input').value}l&key=AIzaSyCefiZQI-ja0UjzlJvr15Y4zkrZtIrrgkY`, true);
+        xhttp.send();
+        return JSON.parse(xhttp.responseText);
+    }
 
-            var gSearch = new google.maps.Map(document.getElementById('google_search_map'), {
-                mapTypeId: google.maps.MapTypeId.ROADMAP
+    var infoWindow;
+
+    function initMap(map) {
+        infoWindow = new google.maps.InfoWindow;
+
+        // Try HTML5 geolocation.
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function (position) {
+                var pos = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                map.setCenter(pos);
+            }, function () {
+                handleLocationError(true, infoWindow, map.getCenter());
             });
-
-            var defaultBounds = new google.maps.LatLngBounds(
-                new google.maps.LatLng(-33.8902, 151.1759),
-                new google.maps.LatLng(-33.8474, 151.2631));
-
-            gSearch.fitBounds(defaultBounds);
-
-            var input = /** @type {HTMLInputElement} */(document.getElementById('target'));
-
-            var searchBox = new google.maps.places.SearchBox(input);
-            var markers = [];
-
-            google.maps.event.addListener(searchBox, 'places_changed', function () {
-                var places = searchBox.getPlaces();
-
-                for (var i = 0, marker; marker = markers[i]; i++) {
-                    marker.setMap(null);
-                }
-
-                markers = [];
-                var bounds = new google.maps.LatLngBounds();
-                for (var i = 0, place; place = places[i]; i++) {
-                    var image = {
-                        url: place.icon,
-                        size: new google.maps.Size(71, 71),
-                        origin: new google.maps.Point(0, 0),
-                        anchor: new google.maps.Point(17, 34),
-                        scaledSize: new google.maps.Size(25, 25)
-                    };
-
-                    var marker = new google.maps.Marker({
-                        map: gSearch,
-                        icon: image,
-                        title: place.name,
-                        position: place.geometry.location
-                    });
-
-                    markers.push(marker);
-
-                    bounds.extend(place.geometry.location);
-                }
-
-                gSearch.fitBounds(bounds);
-            });
-
-            google.maps.event.addListener(gSearch, 'bounds_changed', function () {
-                var bounds = gSearch.getBounds();
-                searchBox.setBounds(bounds);
-            });
+        } else {
+            // Browser doesn't support Geolocation
+            handleLocationError(false, infoWindow, map.getCenter());
         }
 
-        google.maps.event.addDomListener(window, 'load', google_map_search);
+    }
 
+    function handleLocationError(browserHasGeolocation, infoWindow, pos) {
+        infoWindow.setPosition(pos);
+        infoWindow.setContent(browserHasGeolocation ?
+            'Error: The Geolocation service failed.' :
+            'Error: Your browser doesn\'t support geolocation.');
+        infoWindow.open(map);
+    }
+
+    function setupPlaceChangedListener(autocomplete, mode) {
+        autocomplete.bindTo('bounds', gWorld1);
+        autocomplete.addListener('place_changed', function () {
+            var place = autocomplete.getPlace();
+            if (!place.place_id) {
+                window.alert("Please select an option from the dropdown list.");
+                return;
+            }
+            if (mode === 'ORIG') {
+                self.originPlaceId = place.place_id;
+            } else {
+                self.destinationPlaceId = place.place_id;
+            }
+            route();
+        });
+    };
+
+    function route() {
+        if (!self.originPlaceId || !self.destinationPlaceId) {
+            return;
+        }
+
+        self.directionsService.route({
+            origin: {'placeId': self.originPlaceId},
+            destination: {'placeId': self.destinationPlaceId},
+            travelMode: 'DRIVING'
+        }, function (response, status) {
+            if (status === 'OK') {
+                self.directionsDisplay.setDirections(response);
+            } else {
+                window.alert('Directions request failed due to ' + status);
+            }
+        });
+    };
+
+    function AutocompleteDirectionsHandler(map) {
+        self.originPlaceId = null;
+        self.destinationPlaceId = null;
+        self.originInput = document.getElementById('origin-input');
+        self.destinationInput = document.getElementById('destination-input');
+        self.modeSelector = this.travelMode;
+        self.directionsService = new google.maps.DirectionsService;
+        self.directionsDisplay = new google.maps.DirectionsRenderer;
+        self.directionsDisplay.setMap(map);
+
+        var originAutocomplete = new google.maps.places.Autocomplete(
+            self.originInput, {placeIdOnly: true});
+        var destinationAutocomplete = new google.maps.places.Autocomplete(
+            self.destinationInput, {placeIdOnly: true});
+
+        setupPlaceChangedListener(originAutocomplete, 'ORIG');
+        setupPlaceChangedListener(destinationAutocomplete, 'DEST');
+
+        map.controls[google.maps.ControlPosition.TOP_LEFT].push(self.originInput);
+        map.controls[google.maps.ControlPosition.TOP_LEFT].push(self.destinationInput);
+        map.controls[google.maps.ControlPosition.TOP_LEFT].push(self.modeSelector);
     }
 
 });
