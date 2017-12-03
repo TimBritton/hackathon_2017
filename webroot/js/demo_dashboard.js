@@ -7,6 +7,18 @@ $(function () {
             anHttpRequest.onreadystatechange = function () {
                 if (anHttpRequest.readyState == 4 && anHttpRequest.status == 200)
                     aCallback((anHttpRequest.response));
+                else {
+                    var table = document.getElementById("detailTable");
+                    // Create an empty <tr> element and add it to the 1st position of the table:
+
+                    var tableRows = table.getElementsByTagName('tr');
+                    var rowCount = tableRows.length;
+
+                    for (var x = rowCount - 1; x > 0; x--) {
+                        table.removeChild(tableRows[x]);
+                    }
+                    gWorld.setMapOnAll(null);
+                }
             }
             anHttpRequest.open("GET", aUrl, true);
             anHttpRequest.send(null);
@@ -25,30 +37,6 @@ $(function () {
             }
         };
 
-        var features = [
-            {
-                sensorId: "FRSTY:ID:ce22de3b-a771-4491-8dc2-9kka4sas",
-                position: new google.maps.LatLng(41.8963241, -87.65200379999999),
-                type: 'snowflake'
-            }, {
-                sensorId: "FRSTY:ID:da22dy3b-h903-4561-8dc2-4e45d35",
-                position: new google.maps.LatLng(41.89631420000001, -87.6526083),
-                type: 'snowflake'
-            }, {
-                sensorId: "FRSTY:ID:87h2de3b-c332-891s-8dc2-4e84d35",
-                position: new google.maps.LatLng(41.8946913, -87.65300230000003),
-                type: 'snowflake'
-            }, {
-                sensorId: "FRSTY:ID:90ie3b-f771-9376-9l3d-42cad35",
-                position: new google.maps.LatLng(41.8911906, -87.64761729999998),
-                type: 'sunny'
-            }, {
-                sensorId: "FRSTY:ID:9845sb-ju31-4923-093j-jnuhy3dui",
-                position: new google.maps.LatLng(41.8903461, -87.6340424),
-                type: 'sunny'
-            }
-        ];
-
         var table = document.getElementById("detailTable");
         // Create an empty <tr> element and add it to the 1st position of the table:
         var row;
@@ -60,59 +48,44 @@ $(function () {
             table.removeChild(tableRows[x]);
         }
 
-        for (var i = 0; i < features.length; i++) {
-            row = table.insertRow(i + 1);
-            row.insertCell(0).innerHTML = "" + i;
-            row.insertCell(1).innerHTML = features[i].sensorId;
-            row.insertCell(2).innerHTML = features[i].position.lat();
-            row.insertCell(3).innerHTML = features[i].position.lng();
-            row.insertCell(4).innerHTML = (features[i].type == 'sunny') ? "NO" : "YES";
-        }
-        // Create markers.
-        features.forEach(function (feature) {
-            var marker = new google.maps.Marker({
-                position: feature.position,
-                icon: icons[feature.type].icon,
-                map: map
+        if (sensors !== undefined) {
+            for (var i = 0; i < sensors.length; i++) {
+                row = table.insertRow(i + 1);
+                row.insertCell(0).innerHTML = "" + i;
+                row.insertCell(1).innerHTML = sensors[i].sensorId;
+                row.insertCell(2).innerHTML = sensors[i].position.lat();
+                row.insertCell(3).innerHTML = sensors[i].position.lng();
+                row.insertCell(4).innerHTML = sensors[i].type == 'sunny' ? "NO" : "YES";
+            }
+
+            sensors.forEach(function (feature) {
+                var marker = new google.maps.Marker({
+                    position: feature.position,
+                    icon: icons[feature.type].icon,
+                    map: map
+                });
             });
-        });
-        // if (sensors !== undefined) {
-        //     for (var i = 0; i < sensors.length; i++) {
-        //         row = table.insertRow(i + 1);
-        //         row.insertCell(0).innerHTML = "" + i;
-        //         row.insertCell(1).innerHTML = sensors[i].sensorId;
-        //         row.insertCell(2).innerHTML = sensors[i].position.lat();
-        //         row.insertCell(3).innerHTML = sensors[i].position.lng();
-        //         row.insertCell(4).innerHTML = (sensors[i].type == 'sunny') ? "NO" : "YES";
-        //     }
-        //
-        //     sensors.forEach(function (feature) {
-        //         console.log(feature);
-        //         var marker = new google.maps.Marker({
-        //             position: feature.position,
-        //             icon: icons[feature.type].icon,
-        //             map: map
-        //         });
-        //     });
-        // }
+        }
     };
 
-    var getSensors = function (params) {
+    var getSensors = function (map, params) {
         var url = "http://69.25.149.102:8080/api/v1/status/point?lon=" +
             params[0] + "&lat=" + params[1] + "&rad=" +
             params[2];
         var result = [];
+        console.log(url);
         var client = new HttpClient();
         client.get(url, function (response) {
             for (var i = 0; i < response.length; i++) {
                 result.push({
                     sensorId: response[i].sensorId,
                     position: new google.maps.LatLng(response[i].location.coordinates[1], response[i].location.coordinates[0]),
-                    type: 'snowflake',
+                    type: (response[i].icy == "true" ? 'snowflake' : 'sunny'),
                     sensorState: response[i].sensorState
                 })
             }
-            console.log(result);
+            console.log(response);
+            updateIcons(map, result);
             return result;
         });
     };
@@ -147,13 +120,11 @@ $(function () {
         var gWorldOptions = {zoom: 15, center: gWorldCords, mapTypeId: google.maps.MapTypeId.ROADMAP}
         var gWorld = new google.maps.Map(document.getElementById("google_world_map"), gWorldOptions);
         initMap(gWorld);
-        var data = getSensors([gWorld.getCenter().lng(), gWorld.getCenter().lat(),
+        getSensors(gWorld, [gWorld.getCenter().lng(), gWorld.getCenter().lat(),
             document.getElementById('radius1').value * 100]);
-        updateIcons(gWorld, data);
         gWorld.addListener('dragend', function () {
-            var data = getSensors([gWorld.getCenter().lng(), gWorld.getCenter().lat(),
+            getSensors(gWorld, [gWorld.getCenter().lng(), gWorld.getCenter().lat(),
                 document.getElementById('radius1').value * 100]);
-            updateIcons(gWorld, data);
         });
     }
 
