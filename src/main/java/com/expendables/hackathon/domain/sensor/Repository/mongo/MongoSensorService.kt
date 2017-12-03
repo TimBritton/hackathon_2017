@@ -3,6 +3,7 @@ package com.expendables.hackathon.domain.sensor.Repository.mongo
 import com.expendables.hackathon.domain.sensor.Location
 import com.expendables.hackathon.domain.sensor.Repository.SensorService
 import com.expendables.hackathon.domain.sensor.Sensor
+import com.expendables.hackathon.domain.sensor.SensorState
 import com.expendables.hackathon.helper.ConfigStore
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
@@ -10,6 +11,7 @@ import io.vertx.core.Handler
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
+import io.vertx.ext.mongo.FindOptions
 import io.vertx.ext.mongo.MongoClient
 import io.vertx.kotlin.lang.json.JsonObject
 import io.vertx.kotlin.lang.json.json_
@@ -31,8 +33,35 @@ class MongoSensorService(vertx: Vertx) : SensorService{
 
                     var sen = Sensor.fromJsonObject(jsonObject)
                     //todo retrieve stat data if avaiable
+                    var stateQuery = JsonObject(
+                        "sensorId" to sen.sensorId
+                    )
 
-                    callbax.handle(Future.succeededFuture(sen))
+                    var findOptions = FindOptions()
+                    findOptions.setSort(JsonObject(
+                        "createdTime" to -1
+                    ))
+                    findOptions.setLimit(1)
+
+                    mongoClient.findWithOptions("frsty:sensor:state", stateQuery, findOptions, {
+                        rez ->
+                        if(rez.succeeded()) {
+                            if(jsonObject.size() > 0) {
+                                var jsonObject = rez.result().get(0)
+
+                                val sensorState = SensorState.fromJsonObject(jsonObject)
+
+                                sen.sensorState = sensorState
+
+                                callbax.handle(Future.succeededFuture(sen))
+                            }
+                            else
+                            {
+                                callbax.handle(Future.succeededFuture(sen))
+                            }
+                        }
+                    } )
+
                 }
                 else
                 {
@@ -75,8 +104,20 @@ class MongoSensorService(vertx: Vertx) : SensorService{
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun updateSensorState(sensorId: String, water: Boolean, temprature: Int, moisture: Int, callbax: Handler<AsyncResult<Boolean>>) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    override fun updateSensorState(sensor: SensorState, callbax: Handler<AsyncResult<String>>) {
+        mongoClient.save("frsty:sensor:state", JsonObject.mapFrom(sensor), {
+            callback ->
+
+            if(callback.succeeded())
+            {
+                callbax.handle(Future.succeededFuture(callback.result()))
+            }
+            else {
+                callbax.handle(Future.failedFuture(callback.cause()))
+            }
+
+        })
     }
+
 
 }

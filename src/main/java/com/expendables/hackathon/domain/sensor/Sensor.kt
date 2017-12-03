@@ -1,6 +1,7 @@
 package com.expendables.hackathon.domain.sensor
 
 import io.vertx.core.json.JsonObject
+import java.time.Instant
 
 data class Sensor(val sensorId: String, val loraSenorId: String, var location: Location, var sensorState: SensorState?){
     init {
@@ -34,16 +35,14 @@ data class Location(val type:String = "point", var coordinates: DoubleArray) {
     }
 }
 //** water 0 or 10 10 is true
-data class SensorState(val sensorId: String, val water: Boolean, val temprature: Int, val moisture: Int){
+data class SensorState(val sensorId: String, val createdTime: Instant, val water: Boolean, val temprature: Double, val humidity: Int, val moisture: Int){
     init {
 
     }
 
     companion object {
-        fun fromJsonObject(jsonObject: JsonObject): SensorState {
+        fun fromJsonObject(jsonObject: JsonObject): SensorState = SensorState(jsonObject.getString("sensorId"), jsonObject.getInstant("createdTime"), jsonObject.getBoolean("water"), jsonObject.getDouble("temprature"), jsonObject.getInteger("humidity"), jsonObject.getInteger("moisture"))
 
-            return SensorState(jsonObject.getString("sensorId"), jsonObject.getBoolean("water"), jsonObject.getInteger("temprature"), jsonObject.getInteger("moisture"))
-        }
         }
 
 }
