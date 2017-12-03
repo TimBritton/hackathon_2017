@@ -9,7 +9,7 @@ data class Sensor(val sensorId: String, val loraSenorId: String, var location: L
     }
 
     companion object {
-        fun fromJsonObject(jsonObject: JsonObject): Sensor
+       @JvmStatic fun fromJsonObject(jsonObject: JsonObject): Sensor
         {
            return Sensor(jsonObject.getString("sensorId"), jsonObject.getString("sensorId"), Location.fromJsonObject(jsonObject.getJsonObject("location")), null)
         }
@@ -22,7 +22,7 @@ data class Location(val type:String = "point", var coordinates: DoubleArray) {
     }
 
     companion object {
-        fun fromJsonObject(jsonObject: JsonObject): Location {
+        @JvmStatic fun fromJsonObject(jsonObject: JsonObject): Location {
             var arra = kotlin.DoubleArray(2)
 
             var doublea: Double = jsonObject.getJsonArray("coordinates").list.get(0) as Double
@@ -41,7 +41,7 @@ data class SensorState(val sensorId: String, val createdTime: Instant, val water
     }
 
     companion object {
-        fun fromJsonObject(jsonObject: JsonObject): SensorState = SensorState(jsonObject.getString("sensorId"), jsonObject.getInstant("createdTime"), jsonObject.getBoolean("water"), jsonObject.getDouble("temprature"), jsonObject.getInteger("humidity"), jsonObject.getInteger("moisture"))
+        @JvmStatic fun fromJsonObject(jsonObject: JsonObject): SensorState = SensorState(jsonObject.getString("sensorId"), jsonObject.getInstant("createdTime"), jsonObject.getBoolean("water"), jsonObject.getDouble("temprature"), jsonObject.getInteger("humidity"), jsonObject.getInteger("moisture"))
 
         }
 

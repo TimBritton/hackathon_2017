@@ -18,6 +18,12 @@ import io.vertx.kotlin.lang.json.json_
 import java.util.*
 
 class MongoSensorService(vertx: Vertx) : SensorService{
+    override fun readAllSensors(callbax: Handler<AsyncResult<List<Sensor>>>) {
+        mongoClient.find("frsty:sensor", io.vertx.core.json.JsonObject(), {
+            callbackA ->
+        })
+    }
+
     override fun readSensorStateByLoraId(loraSensorId: String, callbax: Handler<AsyncResult<Sensor>>) {
 
         val query = JsonObject(
@@ -100,8 +106,21 @@ class MongoSensorService(vertx: Vertx) : SensorService{
         })
     }
 
-    override fun updateSensor(sensorId: String, sensor: Sensor, callbax: Handler<AsyncResult<Sensor>>) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    override fun updateSensor(sensorId: String, sensor: Sensor, callbax: Handler<AsyncResult<JsonObject>>) {
+        var query = JsonObject(
+            "sensorId" to sensorId
+        )
+        mongoClient.updateCollection("frsty:sensor", query, JsonObject.mapFrom(sensor), {
+            callbaz->
+
+            if(callbaz.succeeded())
+            {
+                callbax.handle(Future.succeededFuture(callbaz.result().toJson()))
+            }
+
+            callbax.handle(Future.failedFuture(callbaz.cause()))
+
+        })
     }
 
     override fun updateSensorState(sensor: SensorState, callbax: Handler<AsyncResult<String>>) {
