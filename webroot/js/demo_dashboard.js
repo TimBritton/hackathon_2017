@@ -13,34 +13,41 @@ $(function () {
 
         var features = [
             {
-                position: new google.maps.LatLng(-33.91721, 151.22630),
+                position: new google.maps.LatLng(41.8963241, -87.65200379999999),
                 type: 'snowflake'
             }, {
-                position: new google.maps.LatLng(-33.91539, 151.22820),
+                position: new google.maps.LatLng(41.89631420000001, -87.6526083),
                 type: 'snowflake'
             }, {
-                position: new google.maps.LatLng(-33.91747, 151.22912),
+                position: new google.maps.LatLng(41.8946913, -87.65300230000003),
                 type: 'snowflake'
             }, {
-                position: new google.maps.LatLng(-33.91910, 151.22907),
-                type: 'snowflake'
-            }, {
-                position: new google.maps.LatLng(-33.91725, 151.23011),
-                type: 'snowflake'
-            }, {
-                position: new google.maps.LatLng(-33.91872, 151.23089),
-                type: 'snowflake'
-            }, {
-                position: new google.maps.LatLng(-33.91784, 151.23094),
+                position: new google.maps.LatLng(41.8911906, -87.64761729999998),
                 type: 'sunny'
             }, {
-                position: new google.maps.LatLng(-33.91682, 151.23149),
-                type: 'sunny'
-            }, {
-                position: new google.maps.LatLng(-33.91790, 151.23463),
+                position: new google.maps.LatLng(41.8903461, -87.6340424),
                 type: 'sunny'
             }
         ];
+
+        var table = document.getElementById("detailTable");
+        // Create an empty <tr> element and add it to the 1st position of the table:
+        var row;
+
+        var tableRows = table.getElementsByTagName('tr');
+        var rowCount = tableRows.length;
+
+        for (var x = rowCount - 1; x > 0; x--) {
+            table.removeChild(tableRows[x]);
+        }
+
+        for (var i = 0; i < features.length; i++) {
+            row = table.insertRow(i + 1);
+            row.insertCell(0).innerHTML = "" + i;
+            row.insertCell(1).innerHTML = features[i].position.lat();
+            row.insertCell(2).innerHTML = features[i].position.lng();
+            row.insertCell(3).innerHTML = (features[i].type == 'sunny') ? "NO" : "YES";
+        }
 
         // Create markers.
         features.forEach(function (feature) {
@@ -53,11 +60,16 @@ $(function () {
     };
 
     var getSensors = function (params) {
-        // var xhttp = new XMLHttpRequest();
-        // xhttp.open("GET", "/api/v1/status/point", true);
-        // xhttp.setRequestHeader("Content-type", "application/json");
-        // xhttp.send(params);
-        // return JSON.parse(xhttp.responseText);
+        console.log(params);
+        var url = "http://69.25.149.102:8080/api/v1/status/point?lon=" +
+            params[0] + "&lat=" + params[1] + "&rad=" +
+            params[2];
+        console.log(url);
+        var xhttp = new XMLHttpRequest();
+        xhttp.open("GET", url, true);
+        xhttp.setRequestHeader("Content-type", "application/json");
+        xhttp.send(null);
+        console.log(xhttp.responseText);
     };
 
     var getIcePath = function (params) {
@@ -98,15 +110,14 @@ $(function () {
         var gWorldOptions = {zoom: 15, center: gWorldCords, mapTypeId: google.maps.MapTypeId.ROADMAP}
         var gWorld = new google.maps.Map(document.getElementById("google_world_map"), gWorldOptions);
         initMap(gWorld);
+        updateIcons(gWorld, []);
         gWorld.addListener('dragend', function () {
-            updateIcons(gWorld);
-            getSensors(JSON.stringify({
-                location: [gWorld.getCenter().lng(), gWorld.getCenter().lat()],
-                maxDistance: document.getElementById('radius1').value
-            }));
+            getSensors([gWorld.getCenter().lng(), gWorld.getCenter().lat(),
+                document.getElementById('radius2').value * 100]);
+            updateIcons(gWorld, []);
             console.log(JSON.stringify({
-                location: [gWorld.getCenter().lng(), gWorld.getCenter().lat()],
-                maxDistance: document.getElementById('radius1').value
+                lon: gWorld.getCenter().lng(), lat: gWorld.getCenter().lat(),
+                rad: document.getElementById('radius2').value
             }));
         });
     }
@@ -118,13 +129,13 @@ $(function () {
         var gWorld1 = new google.maps.Map(document.getElementById("google_map_route"), gWorldOptions);
         initMap(gWorld1);
         new AutocompleteDirectionsHandler(gWorld1);
-
+        updateIcons(gWorld1, []);
         gWorld1.addListener('dragend', function () {
-            updateIcons(gWorld1);
+            updateIcons(gWorld1, []);
             // getIcePath(JSON.stringify({location: [gWorld1.getCenter().lng(), gWorld1.getCenter().lat()], maxDistance: document.getElementById('radius2').value}));
             console.log(JSON.stringify({
-                location: [gWorld1.getCenter().lng(), gWorld1.getCenter().lat()],
-                maxDistance: document.getElementById('radius2').value
+                lon: gWorld1.getCenter().lng(), lat: gWorld1.getCenter().lat(),
+                rad: document.getElementById('radius2').value
             }));
         });
     }
@@ -190,10 +201,15 @@ $(function () {
             if (status === 'OK') {
                 getIcePath(response);
                 var array = [];
-                response.routes[0].legs[0].steps.forEach(function (point) {
-                    array.push([point.start_location.lng(), point.start_location.lat()]);
-                    array.push([point.end_location.lng(), point.end_location.lat()]);
-                })
+                var point;
+                for (var i = 0; i < response.routes[0].legs[0].steps.length; i++) {
+                    point = response.routes[0].legs[0].steps[i];
+                    if (i < response.routes[0].legs[0].steps.length - 1) {
+                        array.push([point.start_location.lng(), point.start_location.lat()]);
+                    } else {
+                        array.push([point.end_location.lng(), point.end_location.lat()]);
+                    }
+                }
                 console.log(array);
                 self.directionsDisplay.setDirections(response);
             } else {
