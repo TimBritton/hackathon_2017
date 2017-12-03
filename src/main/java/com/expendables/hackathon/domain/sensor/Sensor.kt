@@ -11,7 +11,7 @@ data class Sensor(val sensorId: String, val loraSenorId: String, var location: L
     companion object {
        @JvmStatic fun fromJsonObject(jsonObject: JsonObject): Sensor
         {
-           return Sensor(jsonObject.getString("sensorId"), jsonObject.getString("sensorId"), Location.fromJsonObject(jsonObject.getJsonObject("location")), null)
+           return Sensor(jsonObject.getString("sensorId"), jsonObject.getString("loraSenorId") ?: "Nonlora", Location.fromJsonObject(jsonObject.getJsonObject("location")), null)
         }
     }
 }
