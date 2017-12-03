@@ -34,7 +34,7 @@ dependencies {
 
   compile "io.vertx:vertx-unit:$vertxVersion"
   compile "ch.qos.logback:logback-classic:1.0.13"
-
+    compile 'io.vertx:vertx-rx-java2:3.5.0'
   compile "io.vertx:vertx-core:$vertxVersion"
   compile "io.vertx:vertx-mongo-embedded-db:$vertxVersion"
   compile "io.vertx:vertx-web:$vertxVersion"

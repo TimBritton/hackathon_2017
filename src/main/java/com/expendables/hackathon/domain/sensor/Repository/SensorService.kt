@@ -5,6 +5,7 @@ import com.expendables.hackathon.domain.sensor.Sensor
 import com.expendables.hackathon.domain.sensor.SensorState
 import io.vertx.core.AsyncResult
 import io.vertx.core.Handler
+import io.vertx.core.json.JsonObject
 
 interface SensorService {
 
@@ -14,7 +15,7 @@ interface SensorService {
 
     fun createSensor(loraSensorId: String, location: Location, callbax: Handler<AsyncResult<Sensor>>)
 
-    fun updateSensor(sensorId: String, sensor:Sensor, callbax: Handler<AsyncResult<Sensor>>)
+    fun updateSensor(sensorId: String, sensor:Sensor, callbax: Handler<AsyncResult<JsonObject>>)
 
     fun updateSensorState(sensor: SensorState, callbax: Handler<AsyncResult<String>>)
 
