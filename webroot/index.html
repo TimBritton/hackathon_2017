@@ -331,6 +331,7 @@
                                 <thead>
                                 <tr>
                                     <th>#</th>
+                                    <th>SensorId</th>
                                     <th>Latitude</th>
                                     <th>Longitude</th>
                                     <th>Ice</th>
@@ -366,36 +367,34 @@
                 </div>
             </div>
 
-            <div class="row">
-                <div class="col-md-16">
-                    <!-- START GOOGLE WORLD MAP -->
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <h3 class="panel-title">Google World Map</h3>
-                        </div>
-                        <div class="sliderContainer">
-                            <h5>Radius:</h5>
-                            <input type="range" min="1" max="10" value="5" id="radius2"
-                                   onchange="radiusChange('radius2')">
-                            <p id="radius2value">5 miles</p>
-                        </div>
-                        <div style="height: 100%;  margin: 0; padding: 0;">
-                            <div class="panel-body panel-body-map">
-                                <input id="origin-input" class="controls" type="text"
-                                       placeholder="Enter an origin location">
+            <!--<div class="row">-->
+                <!--<div class="col-md-16">-->
+                    <!--&lt;!&ndash; START GOOGLE WORLD MAP &ndash;&gt;-->
+                    <!--<div class="panel panel-default">-->
+                        <!--<div class="panel-heading">-->
+                            <!--<h3 class="panel-title">Google World Map</h3>-->
+                        <!--</div>-->
+                        <!--<div class="sliderContainer">-->
+                            <!--<h5>Radius:</h5>-->
+                            <!--<input type="range" min="1" max="10" value="5" id="radius2"-->
+                                   <!--onchange="radiusChange('radius2')">-->
+                            <!--<p id="radius2value">5 miles</p>-->
+                        <!--</div>-->
+                        <!--<div style="height: 100%;  margin: 0; padding: 0;">-->
+                            <!--<div class="panel-body panel-body-map">-->
+                                <!--<input id="origin-input" class="controls" type="text"-->
+                                       <!--placeholder="Enter an origin location">-->
 
-                                <input id="destination-input" class="controls" type="text"
-                                       placeholder="Enter a destination location">
-                                <div id="google_map_route" style="width: 100%; height: 300px;"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- END GOOGLE WORLD MAP-->
-                </div>
-            </div>
-
-
+                                <!--<input id="destination-input" class="controls" type="text"-->
+                                       <!--placeholder="Enter a destination location">-->
+                                <!--<div id="google_map_route" style="width: 100%; height: 300px;"></div>-->
+                            <!--</div>-->
+                        <!--</div>-->
+                    <!--</div>-->
+                    <!--&lt;!&ndash; END GOOGLE WORLD MAP&ndash;&gt;-->
+                <!--</div>-->
             <!--</div>-->
+
             <div class="common-modal modal fade" id="common-Modal1" tabindex="-1" role="dialog" aria-hidden="true">
                 <div class="modal-content">
                     <ul class="list-inline item-details">
