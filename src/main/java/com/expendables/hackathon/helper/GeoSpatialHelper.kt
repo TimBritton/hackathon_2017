@@ -7,7 +7,7 @@ import io.vertx.kotlin.lang.json.JsonObject
 
 class GeoSpatialHelper {
     companion object {
-        fun help(lon: Double, lat: Double, distance: Int): JsonObject {
+        @JvmStatic fun help(lon: Double, lat: Double, distance: Int): JsonObject {
             return JsonObject(
                 "location" to JsonObject(
                     "\$near" to JsonObject(
