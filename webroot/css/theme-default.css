@@ -416,18 +416,18 @@ body.page-container-boxed .page-container {
     color: #ffffff;
 }
 
-.x-navigation li.xn-openable:before {
-    position: absolute;
-    font-family: "FontAwesome";
-    content: "\f196";
-    font-size: 14px;
-    width: 20px;
-    height: 20px;
-    color: #ffffff;
-    right: 0px;
-    top: 12px;
-    cursor: pointer;
-}
+/*.x-navigation li.xn-openable:before {*/
+    /*position: absolute;*/
+    /*font-family: "FontAwesome";*/
+    /*content: "\f196";*/
+    /*font-size: 14px;*/
+    /*width: 20px;*/
+    /*height: 20px;*/
+    /*color: #ffffff;*/
+    /*right: 0px;*/
+    /*top: 12px;*/
+    /*cursor: pointer;*/
+/*}*/
 
 .x-navigation li.active.xn-openable:before {
     content: "\f147";

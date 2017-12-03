@@ -1,6 +1,6 @@
 $(function () {
     var self = this;
-    var updateIcons = function (map) {
+    var updateIcons = function (map, sensors) {
         var iconBase = 'https://maps.google.com/mapfiles/kml/shapes/';
         var icons = {
             snowflake: {
@@ -52,26 +52,27 @@ $(function () {
         });
     };
 
-    var getSensors = function () {
-        var xhttp = new XMLHttpRequest();
-        xhttp.open("GET", "/api/v1/status/point", true);
-        xhttp.setRequestHeader("Content-type", "application/json");
-        xhttp.send();
-        return JSON.parse(xhttp.responseText);
+    var getSensors = function (params) {
+        // var xhttp = new XMLHttpRequest();
+        // xhttp.open("GET", "/api/v1/status/point", true);
+        // xhttp.setRequestHeader("Content-type", "application/json");
+        // xhttp.send(params);
+        // return JSON.parse(xhttp.responseText);
     };
 
-    var getIcePath = function () {
-        var xhttp = new XMLHttpRequest();
-        xhttp.open("GET", "/api/v1/status/route", true);
-        xhttp.setRequestHeader("Content-type", "application/json");
-        xhttp.send();
-        return JSON.parse(xhttp.responseText);
+    var getIcePath = function (params) {
+        // var xhttp = new XMLHttpRequest();
+        // xhttp.open("GET", "/api/v1/status/route", true);
+        // xhttp.setRequestHeader("Content-type", "application/json");
+        // xhttp.send(params);
+        // return JSON.parse(xhttp.responseText);
     }
 
     radiusChange = function (radius) {
         document.getElementById(radius + 'value').innerHTML =
             document.getElementById(radius).value + ' miles';
     }
+
     /* Donut dashboard chart */
     Morris.Donut({
         element: 'dashboard-donut-1',
@@ -99,9 +100,10 @@ $(function () {
         initMap(gWorld);
         gWorld.addListener('dragend', function () {
             updateIcons(gWorld);
-            // 3 seconds after the center of the map has changed, pan back to the
-            // marker.
-            // getSensors(JSON.stringify({location: [gWorld.getCenter().lng(), gWorld.getCenter().lat()], maxDistance: 100}));
+            getSensors(JSON.stringify({
+                location: [gWorld.getCenter().lng(), gWorld.getCenter().lat()],
+                maxDistance: document.getElementById('radius1').value
+            }));
             console.log(JSON.stringify({
                 location: [gWorld.getCenter().lng(), gWorld.getCenter().lat()],
                 maxDistance: document.getElementById('radius1').value
@@ -119,21 +121,12 @@ $(function () {
 
         gWorld1.addListener('dragend', function () {
             updateIcons(gWorld1);
-            // 3 seconds after the center of the map has changed, pan back to the
-            // marker.
-            // getSensors(JSON.stringify({location: [gWorld.getCenter().lng(), gWorld.getCenter().lat()], maxDistance: 100}));
+            // getIcePath(JSON.stringify({location: [gWorld1.getCenter().lng(), gWorld1.getCenter().lat()], maxDistance: document.getElementById('radius2').value}));
             console.log(JSON.stringify({
-                location: [gWorld.getCenter().lng(), gWorld.getCenter().lat()],
-                maxDistance: document.getElementById('radius1').value
+                location: [gWorld1.getCenter().lng(), gWorld1.getCenter().lat()],
+                maxDistance: document.getElementById('radius2').value
             }));
         });
-    }
-
-    updateRoute = function () {
-        var xhttp = new XMLHttpRequest();
-        xhttp.open("GET", `https://maps.googleapis.com/maps/api/directions/json?origin=${document.getElementById('origin-input').value}&destination=${document.getElementById('destination-input').value}l&key=AIzaSyCefiZQI-ja0UjzlJvr15Y4zkrZtIrrgkY`, true);
-        xhttp.send();
-        return JSON.parse(xhttp.responseText);
     }
 
     var infoWindow;
@@ -195,6 +188,13 @@ $(function () {
             travelMode: 'DRIVING'
         }, function (response, status) {
             if (status === 'OK') {
+                getIcePath(response);
+                var array = [];
+                response.routes[0].legs[0].steps.forEach(function (point) {
+                    array.push([point.start_location.lng(), point.start_location.lat()]);
+                    array.push([point.end_location.lng(), point.end_location.lat()]);
+                })
+                console.log(array);
                 self.directionsDisplay.setDirections(response);
             } else {
                 window.alert('Directions request failed due to ' + status);
